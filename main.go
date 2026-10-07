@@ -1,4 +1,3 @@
-// package main is the main package of the application
 package main
 
 import (
@@ -11,14 +10,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 	"github.com/pressly/goose/v3"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("Warning: .env file not found")
-	}
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL nao definida")
@@ -43,6 +38,23 @@ func main() {
 		log.Fatal(err)
 	}
 	defer pool.Close()
+
+	// Twilio real: só liga se as chaves existirem no .env
+	if os.Getenv("TWILIO_AUTH_TOKEN") != "" {
+		app := newApp(pool)
+		app.register()
+		log.Println("twilio ligada")
+	}
+
+	// Simulador de demo: só liga com SIMULATOR=1
+	if os.Getenv("SIMULATOR") == "1" {
+		sim, err := newSim(context.Background(), pool)
+		if err != nil {
+			log.Fatal(err)
+		}
+		sim.register()
+		log.Println("simulador em http://localhost:8080/sim")
+	}
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if err := pool.Ping(r.Context()); err != nil {
