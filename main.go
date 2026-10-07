@@ -39,6 +39,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	if len(os.Args) == 3 && os.Args[1] == "createuser" {
+		if err := createUserCmd(context.Background(), pool, os.Args[2]); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("usuario criado")
+		return
+	}
+
+	auth := newAuth(pool)
+	auth.register()
+
 	// Twilio real: só liga se as chaves existirem no .env
 	if os.Getenv("TWILIO_AUTH_TOKEN") != "" {
 		app := newApp(pool)
@@ -52,7 +63,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		sim.register()
+		sim.register(auth.require)
 		log.Println("simulador em http://localhost:8080/sim")
 	}
 

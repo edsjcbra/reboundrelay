@@ -59,12 +59,12 @@ func newSim(ctx context.Context, pool *pgxpool.Pool) (*Sim, error) {
 	return &Sim{pool: pool, bizID: id}, nil
 }
 
-func (s *Sim) register() {
-	http.HandleFunc("/sim", s.handlePage)
-	http.HandleFunc("/sim/missed", s.post(s.handleMissed))
-	http.HandleFunc("/sim/reply", s.post(s.handleReply))
-	http.HandleFunc("/sim/rename", s.post(s.handleRename))
-	http.HandleFunc("/sim/reset", s.post(s.handleReset))
+func (s *Sim) register(protect func(http.HandlerFunc) http.HandlerFunc) {
+	http.HandleFunc("/sim", protect(s.handlePage))
+	http.HandleFunc("/sim/missed", protect(s.post(s.handleMissed)))
+	http.HandleFunc("/sim/reply", protect(s.post(s.handleReply)))
+	http.HandleFunc("/sim/rename", protect(s.post(s.handleRename)))
+	http.HandleFunc("/sim/reset", protect(s.post(s.handleReset)))
 }
 
 func (s *Sim) post(next http.HandlerFunc) http.HandlerFunc {
@@ -355,7 +355,8 @@ main{display:grid;grid-template-columns:340px 1fr;gap:24px;padding:24px;align-it
 <body>
 <header>
   <h1>ReboundRelay <span class="tag">- Never lose a customer to a missed call</span></h1>
-  <span class="tag">Demo mode - no real texts are sent</span>
+    <span class="tag">Demo mode - no real texts are sent</span>
+  	<form method="post" action="/logout" style="margin:0"><button class="gray">Log out</button></form>
 </header>
 
 <div class="bar">
